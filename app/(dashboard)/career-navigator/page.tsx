@@ -69,14 +69,58 @@ const INITIAL_PROFILE = {
   workExp: "0",
 };
 
+interface University {
+  name: string;
+  program: string;
+  country?: string;
+  tuition?: string | number;
+  ranking?: string;
+  rankingScore?: number;
+  fitScore?: number;
+}
+
+interface CountryRecommendation {
+  country: string;
+  fitScore: number;
+  jobMarketScore: number;
+  reasoning: string;
+  topUniversities: University[];
+  postStudyVisa: string;
+}
+
+interface ProgramRecommendation {
+  program: string;
+  fitScore: number;
+  reasoning: string;
+}
+
+interface SalaryTrajectory {
+  role: string;
+  salaryUSD: string;
+  salaryINR: string;
+}
+
+interface CareerTrajectory {
+  year1: SalaryTrajectory;
+  year3: SalaryTrajectory;
+  year5: SalaryTrajectory;
+}
+
+interface CareerResults {
+  countryRecommendations: CountryRecommendation[];
+  programRecommendations: ProgramRecommendation[];
+  careerTrajectory: CareerTrajectory;
+  keyInsight: string;
+}
+
 export default function CareerNavigator() {
   const { isDemoMode, demoProfile } = useDemoMode();
 
   const [profile, setProfile, clearPersist, wasRestored] = useFormPersist("career_nav", INITIAL_PROFILE);
   const [step, setStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<any>(null);
-  const [selectedUni, setSelectedUni] = useState<any>(null);
+  const [results, setResults] = useState<CareerResults | null>(null);
+  const [selectedUni, setSelectedUni] = useState<University | null>(null);
 
   // Unsaved Warning
   useUnsavedWarning(step > 1 && !results);
@@ -169,7 +213,7 @@ export default function CareerNavigator() {
     }
 
     try {
-      const data = await apiPost('/api/gemini/career', profile);
+      const data = await apiPost<CareerResults>('/api/gemini/career', profile);
       setResults(data);
       if (!isDemoMode) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -186,15 +230,15 @@ export default function CareerNavigator() {
             targetCountries: profile.countries
           });
           // Save result to history
-          await saveToolHistory(user.id, 'career_navigator', profile, data);
+          await saveToolHistory(user.id, 'career_navigator', profile, data as unknown as Record<string, unknown>);
         }
       }
       toast.success("🎯 +50 XP — Career Path Unlocked!", {
         description: "Your AI analysis is ready for review. Profile data updated.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error("Analysis failed", {
-        description: error.message || "There was an error consulting the AI. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error consulting the AI. Please try again.",
       });
     } finally {
       setIsAnalyzing(false);
@@ -500,7 +544,7 @@ export default function CareerNavigator() {
           >
             {/* Country Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {results.countryRecommendations.map((rec: any, i: number) => (
+              {results?.countryRecommendations.map((rec, i) => (
                 <Card key={i} className="bg-[#111827] border-white/10 hover:border-primary/50 transition-all group overflow-hidden">
                   <CardHeader className="p-6 pb-0 relative">
                     <div className="flex justify-between items-start">
@@ -538,7 +582,7 @@ export default function CareerNavigator() {
                     </p>
                     <div className="space-y-3">
                       <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground border-b border-white/5 pb-2">Top Universities</p>
-                      {rec.topUniversities.map((uni: any, j: number) => (
+                      {rec.topUniversities.map((uni, j) => (
                         <div key={j} className="flex justify-between items-center group/item hover:bg-white/5 p-2 rounded transition-colors">
                           <div className="flex flex-col items-start">
                             <span className="text-sm font-bold">{uni.name}</span>
@@ -570,7 +614,7 @@ export default function CareerNavigator() {
                   <Zap className="w-6 h-6 mr-3 text-primary" /> Specialized Program Tracks
                 </h3>
                 <div className="space-y-4">
-                  {results.programRecommendations.map((prog: any, i: number) => (
+                  {results?.programRecommendations.map((prog, i) => (
                     <Card key={i} className="bg-[#111827] border-white/10 p-6 flex items-center justify-between group hover:bg-primary/[0.02] transition-colors">
                       <div className="space-y-2">
                         <h4 className="text-lg font-bold text-white group-hover:text-primary transition-colors">{prog.program}</h4>
@@ -593,9 +637,9 @@ export default function CareerNavigator() {
                     <div className="absolute top-1/2 left-0 w-full h-1 bg-white/5 -translate-y-1/2" />
                     <div className="grid grid-cols-3 gap-4 relative z-10">
                       {[
-                        { label: "Year 1", ...results.careerTrajectory.year1 },
-                        { label: "Year 3", ...results.careerTrajectory.year3 },
-                        { label: "Year 5", ...results.careerTrajectory.year5 },
+                        { label: "Year 1", ...results?.careerTrajectory.year1 },
+                        { label: "Year 3", ...results?.careerTrajectory.year3 },
+                        { label: "Year 5", ...results?.careerTrajectory.year5 },
                       ].map((point, i) => (
                         <div key={i} className="flex flex-col items-center text-center space-y-4">
                           <div className="w-4 h-4 rounded-full bg-primary shadow-[0_0_15px_rgba(245,158,11,0.8)]" />
@@ -622,7 +666,7 @@ export default function CareerNavigator() {
                     <Trophy className="w-5 h-5 mr-2 fill-primary" /> AI Matchmaker Insight
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed relative z-10">
-                    {results.keyInsight}
+                    {results?.keyInsight}
                   </p>
                   <div className="mt-8 pt-8 border-t border-primary/10 flex justify-between items-center relative z-10">
                     <p className="text-[10px] font-mono text-muted-foreground uppercase">Profile Level Suggestion</p>
@@ -647,7 +691,7 @@ export default function CareerNavigator() {
         <AddShortlistModal
           isOpen={!!selectedUni}
           onClose={() => setSelectedUni(null)}
-          university={selectedUni}
+          university={selectedUni as any}
         />
       )}
     </div>

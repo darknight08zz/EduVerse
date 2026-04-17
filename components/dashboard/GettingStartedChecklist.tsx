@@ -23,7 +23,12 @@ interface ChecklistItem {
 }
 
 interface GettingStartedChecklistProps {
-  profile: any;
+  profile: {
+    onboarding_complete?: boolean;
+    current_degree?: string;
+    degree?: string;
+    xp_points: number;
+  } | null;
   toolsUsed: string[];
   shortlistCount: number;
 }
@@ -43,7 +48,7 @@ export default function GettingStartedChecklist({
       isComplete: !!(
         profile?.onboarding_complete || 
         (profile?.current_degree || profile?.degree) ||
-        (profile?.xp_points > 50)
+        (profile?.xp_points ?? 0 > 50)
       ),
     },
     {

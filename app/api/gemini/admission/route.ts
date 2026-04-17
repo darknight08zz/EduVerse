@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const { session, error: authError } = await requireAuthAndCSRF(req);
     if (authError) return authError;
 
-    const rateCheck = await checkRateLimit((session?.user as any).id, 'gemini/admission');
+    const userId = (session?.user as { id: string }).id;
+    const rateCheck = await checkRateLimit(userId, 'gemini/admission');
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: `Rate limit exceeded. Resets at ${rateCheck.resetAt.toLocaleTimeString()}.` },

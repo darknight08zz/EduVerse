@@ -29,14 +29,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { calculateLevel } from "@/lib/gamification";
+import { calculateLevel } from "@/lib/gamification-data";
 import { cn } from "@/lib/utils";
 
+interface HistoryItem {
+  tool_name: string;
+  created_at: string;
+  results: any; // We can keep this as any for now as it varies wildly, or use Record<string, unknown>
+}
+
+interface ProfileData {
+  id: string;
+  name?: string;
+  current_degree?: string;
+  graduation_year?: number;
+  gpa?: number;
+  gre_score?: number;
+  ielts_score?: number;
+  budget_usd?: number;
+  xp_points: number;
+  streak_days: number;
+}
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   useEffect(() => {
     async function loadProfile() {
@@ -69,6 +88,8 @@ export default function ProfilePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not logged in");
 
+      if (!profile) return;
+
       const { error } = await supabase
         .from('user_profiles')
         .update({
@@ -85,14 +106,16 @@ export default function ProfilePage() {
 
       if (error) throw error;
       toast.success("Profile updated successfully!");
-    } catch (err: any) {
-      toast.error("Failed to update profile", { description: err.message });
+    } catch (err: unknown) {
+      toast.error("Failed to update profile", { 
+        description: err instanceof Error ? err.message : "An unknown error occurred" 
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !profile) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -160,22 +183,22 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <Label className="text-xs text-muted-foreground uppercase">Full Display Name</Label>
                   <Input 
-                    value={profile.name ?? ""} 
-                    onChange={e => setProfile({...profile, name: e.target.value})}
+                    value={profile?.name ?? ""} 
+                    onChange={e => setProfile(prev => prev ? {...prev, name: e.target.value} : null)}
                     className="bg-white/5 border-white/10 h-12" 
                   />
                 </div>
                 <div className="space-y-4">
                   <Label className="text-xs text-muted-foreground uppercase">Current highest degree</Label>
                   <Input 
-                    value={profile.current_degree ?? ""} 
-                    onChange={e => setProfile({...profile, current_degree: e.target.value})}
+                    value={profile?.current_degree ?? ""} 
+                    onChange={e => setProfile(prev => prev ? {...prev, current_degree: e.target.value} : null)}
                     className="bg-white/5 border-white/10 h-12" 
                   />
                 </div>
                 <div className="space-y-4">
                   <Label className="text-xs text-muted-foreground uppercase">Graduation Year</Label>
-                  <Select value={profile.graduation_year?.toString() || "2024"} onValueChange={v => setProfile({...profile, graduation_year: parseInt(v)})}>
+                  <Select value={profile?.graduation_year?.toString() || "2024"} onValueChange={v => setProfile(prev => prev ? {...prev, graduation_year: parseInt(v || "2024")} : null)}>
                     <SelectTrigger className="bg-white/5 border-white/10 h-12">
                       <SelectValue />
                     </SelectTrigger>
@@ -195,33 +218,33 @@ export default function ProfilePage() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <Label className="text-xs text-muted-foreground uppercase">Undergraduate GPA (10.0 scale)</Label>
-                    <span className="text-white font-black font-space-mono text-xl">{profile.gpa?.toFixed(1) || "0.0"}</span>
+                    <span className="text-white font-black font-space-mono text-xl">{profile?.gpa?.toFixed(1) || "0.0"}</span>
                   </div>
                   <Slider 
-                    value={[profile.gpa || 0]} min={2} max={10} step={0.1}
-                    onValueChange={(v) => setProfile({...profile, gpa: v[0]})}
+                    value={[profile?.gpa || 0]} min={2} max={10} step={0.1}
+                    onValueChange={(v) => setProfile(prev => prev ? {...prev, gpa: v[0]} : null)}
                   />
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <Label className="text-xs text-muted-foreground uppercase">GRE Score</Label>
-                    <span className="text-white font-black font-space-mono text-xl">{profile.gre_score || "N/A"}</span>
+                    <span className="text-white font-black font-space-mono text-xl">{profile?.gre_score || "N/A"}</span>
                   </div>
                   <Slider 
-                    value={[profile.gre_score || 260]} min={260} max={340} step={1}
-                    onValueChange={(v) => setProfile({...profile, gre_score: v[0]})}
+                    value={[profile?.gre_score || 260]} min={260} max={340} step={1}
+                    onValueChange={(v) => setProfile(prev => prev ? {...prev, gre_score: v[0]} : null)}
                   />
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <Label className="text-xs text-muted-foreground uppercase">IELTS / TOEFL (Converted to IELTS Bands)</Label>
-                    <span className="text-white font-black font-space-mono text-xl">{profile.ielts_score || "0.0"}</span>
+                    <span className="text-white font-black font-space-mono text-xl">{profile?.ielts_score || "0.0"}</span>
                   </div>
                   <Slider 
-                    value={[profile.ielts_score || 0]} min={0} max={9} step={0.5}
-                    onValueChange={(v) => setProfile({...profile, ielts_score: v[0]})}
+                    value={[profile?.ielts_score || 0]} min={0} max={9} step={0.5}
+                    onValueChange={(v) => setProfile(prev => prev ? {...prev, ielts_score: v[0]} : null)}
                   />
                 </div>
               </CardContent>
@@ -238,12 +261,12 @@ export default function ProfilePage() {
              </CardHeader>
              <CardContent className="p-8 space-y-10">
                 <div className="text-center space-y-2">
-                   <p className="text-4xl font-black text-white font-space-mono">${profile.budget_usd?.toLocaleString() || "0"}</p>
+                   <p className="text-4xl font-black text-white font-space-mono">${profile?.budget_usd?.toLocaleString() || "0"}</p>
                    <p className="text-xs text-muted-foreground uppercase font-mono tracking-widest">Total Estimated Budget Available</p>
                 </div>
                 <Slider 
-                  value={[profile.budget_usd || 10000]} min={10000} max={250000} step={5000}
-                  onValueChange={(v) => setProfile({...profile, budget_usd: v[0]})}
+                  value={[profile?.budget_usd || 10000]} min={10000} max={250000} step={5000}
+                  onValueChange={(v) => setProfile(prev => prev ? {...prev, budget_usd: v[0]} : null)}
                   className="py-10"
                 />
                 <div className="p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4">

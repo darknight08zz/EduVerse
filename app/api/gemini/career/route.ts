@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
     const { session, error: authError } = await requireAuthAndCSRF(req);
     if (authError) return authError;
 
-    const rateCheck = await checkRateLimit((session?.user as any).id, 'gemini/career');
+    const userId = (session?.user as { id: string }).id;
+    const rateCheck = await checkRateLimit(userId, 'gemini/career');
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: `Rate limit exceeded. Resets at ${rateCheck.resetAt.toLocaleTimeString()}.` },
@@ -34,8 +35,8 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('API Error:', error);
+  } catch (err: unknown) {
+    console.error('API Error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

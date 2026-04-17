@@ -40,6 +40,20 @@ const QUICK_QUESTIONS = [
 
 import { useDemoMode } from "@/contexts/DemoContext";
 
+interface UserProfile {
+  id: string;
+  name?: string;
+  current_degree?: string;
+  gpa?: string | number;
+  budget_usd?: number;
+}
+
+interface ChatSession {
+  id: string;
+  messages: Message[];
+  created_at: string;
+}
+
 export default function MentorChat() {
   const { isDemoMode, demoProfile } = useDemoMode();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,8 +61,8 @@ export default function MentorChat() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionXP, setSessionXP] = useState(0);
   const [followups, setFollowups] = useState<string[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [history, setHistory] = useState<ChatSession[]>([]);
   const [sessionId, setSessionId] = useState<string | undefined>();
   
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -62,8 +76,8 @@ export default function MentorChat() {
             id: 'demo-1', 
             created_at: new Date(Date.now() - 86400000).toISOString(),
             messages: [
-              { role: 'user', content: 'What are my chances at UCSD?' },
-              { role: 'model', content: "Based on your GPA of 8.4 and GRE of 318, you have a **Moderate** chance at UCSD's MS CS program. Focusing on a strong technical SOP will be key." }
+              { role: 'user', content: 'What are my chances at UCSD?', timestamp: new Date(Date.now() - 86410000).toISOString() },
+              { role: 'model', content: "Based on your GPA of 8.4 and GRE of 318, you have a **Moderate** chance at UCSD's MS CS program. Focusing on a strong technical SOP will be key.", timestamp: new Date(Date.now() - 86405000).toISOString() }
             ] 
           }
         ]);

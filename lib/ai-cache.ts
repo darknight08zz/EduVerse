@@ -1,7 +1,7 @@
 // lib/ai-cache.ts
 
 type CacheEntry = {
-  response: any;
+  response: unknown;
   timestamp: number;
 };
 
@@ -33,7 +33,7 @@ class AICache {
     return hash.toString();
   }
 
-  public get(prompt: string): any | null {
+  public get(prompt: string): unknown {
     const hash = this.generateHash(prompt);
     const entry = this.cache.get(hash);
     
@@ -47,7 +47,7 @@ class AICache {
     return entry.response;
   }
 
-  public set(prompt: string, response: any): void {
+  public set(prompt: string, response: unknown): void {
     const hash = this.generateHash(prompt);
     this.cache.set(hash, {
         response,

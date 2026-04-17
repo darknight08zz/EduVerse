@@ -3,19 +3,28 @@ import { NextRequest } from 'next/server';
 import { requireAuthAndCSRF } from '@/lib/csrf';
 import { checkRateLimit } from '@/lib/rate-limiter';
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { session, error: authError } = await requireAuthAndCSRF(req);
     if (authError) return authError;
 
-    const rateCheck = await checkRateLimit((session?.user as any).id, 'gemini/chat');
+    if (!session?.user?.id) {
+       return new Response('Unauthorized', { status: 401 });
+    }
+
+    const rateCheck = await checkRateLimit(session.user.id, 'gemini/chat');
     if (!rateCheck.allowed) {
       return new Response(JSON.stringify({ 
         error: `Rate limit exceeded. Resets at ${rateCheck.resetAt.toLocaleTimeString()}.` 
       }), { status: 429 });
     }
 
-    const { messages, userProfile } = await req.json();
+    const { messages, userProfile }: { messages: Message[], userProfile: any } = await req.json();
     
     if (!process.env.GEMINI_API_KEY) {
       return new Response('GEMINI_API_KEY is not configured', { status: 500 });
@@ -26,14 +35,11 @@ export async function POST(req: NextRequest) {
     const cappedMessages = messages.length > MAX_HISTORY
       ? [
           ...messages.slice(0, 1), // Always keep the initial context/system query if present
-          { role: 'assistant', content: '[Earlier conversation summarized for efficiency — continuing from recent messages]' },
+          { role: 'assistant', content: '[Earlier conversation summarized for efficiency — continuing from recent messages]' } as Message,
           ...messages.slice(-MAX_HISTORY + 2) // Last 18 messages
         ]
       : messages;
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
     const systemContext = `You are EduVerse Mentor, an expert study-abroad consultant specialized in helping Indian students pursue higher education internationally. You have 15 years of experience and have helped 10,000+ students.
 
 Student Profile for Context:
@@ -66,12 +72,17 @@ Guardrails:
 - Never give definitive visa advice (refer to authorized agents).
 - Use real data only. Redirect if asked outside domain.`;
 
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ 
+      model: 'gemini-flash-latest',
+      systemInstruction: systemContext
+    });
+    
     const chat = model.startChat({
-      history: cappedMessages.slice(0, -1).map((m: any) => ({
+      history: cappedMessages.slice(0, -1).map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
-      })),
-      systemInstruction: systemContext
+      }))
     });
 
     const result = await chat.sendMessageStream(cappedMessages[cappedMessages.length - 1].content);
@@ -85,6 +96,7 @@ Guardrails:
           }
           controller.close();
         } catch (error) {
+          console.error('[Stream Error] Chat:', error);
           controller.error(error);
         }
       }
@@ -97,9 +109,13 @@ Guardrails:
         'Connection': 'keep-alive'
       }
     });
-  } catch (error) {
-    console.error('Chat API Error:', error);
-    return new Response(JSON.stringify({ error: 'Failed to generate response' }), { 
+  } catch (error: any) {
+    console.error('Chat API Error Details:', error);
+    // Return a more descriptive error response for debugging
+    return new Response(JSON.stringify({ 
+      error: 'Failed to generate response', 
+      details: error.message || 'Unknown error' 
+    }), { 
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

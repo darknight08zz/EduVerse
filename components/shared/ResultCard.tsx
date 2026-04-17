@@ -12,7 +12,7 @@ interface ResultCardProps {
   trend?: string;
   description: string;
   actionText?: string;
-  icon?: any;
+  icon?: React.ElementType;
 }
 
 export default function ResultCard({

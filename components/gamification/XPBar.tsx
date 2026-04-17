@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, TrendingUp, Sparkles } from "lucide-react";
-import { calculateLevel } from "@/lib/gamification";
+import { calculateLevel } from "@/lib/gamification-data";
 import { cn } from "@/lib/utils";
 
 interface XPBarProps {

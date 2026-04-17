@@ -50,10 +50,37 @@ import { supabase } from "@/lib/supabase";
 import { apiPost } from "@/lib/api-client";
 import { useDemoMode } from "@/contexts/DemoContext";
 
+interface CashFlowPoint {
+  month: number;
+  balance: number;
+}
+
+interface Trajectory {
+  year1: string;
+  year5: string;
+  year10NetWorth: string;
+}
+
+interface Comparison {
+  withoutMS: Trajectory;
+  withMS: Trajectory;
+}
+
+interface ROIResults {
+  breakEvenYears: number;
+  breakEvenMonths: number;
+  lifetimeGainINR: string;
+  cashFlowData: CashFlowPoint[];
+  aiInsight: string;
+  optimization: string;
+  risk: string;
+  comparison: Comparison;
+}
+
 export default function ROICalculator() {
   const { isDemoMode, demoProfile } = useDemoMode();
   const [isCalculating, setIsCalculating] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<ROIResults | null>(null);
   
   // Input State
   const [inputs, setInputs] = useState({
@@ -122,7 +149,7 @@ export default function ROICalculator() {
     }
 
     try {
-      const data = await apiPost('/api/gemini/roi', { profile: inputs });
+      const data = await apiPost<ROIResults>('/api/gemini/roi', { profile: inputs });
       setResult(data);
       if (!isDemoMode) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -131,16 +158,16 @@ export default function ROICalculator() {
           // Sync budget data back to user_profiles
           await syncProfileData(user.id, { budget: inputs.tuition + (inputs.livingExpenses * parseFloat(inputs.duration)) });
           // Save result to history
-          await saveToolHistory(user.id, 'roi_calculator', inputs, data);
+          await saveToolHistory(user.id, 'roi_calculator', inputs, data as unknown as Record<string, unknown>);
         }
       }
       toast.success("💰 +40 XP — Financial Planner Badge Unlocked!", {
         description: "Your comprehensive ROI analysis is complete. Profile data updated.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error("Analysis failed", {
-        description: err.message || "Could not reach the AI financial engine."
+        description: err instanceof Error ? err.message : "Could not reach the AI financial engine."
       });
     } finally {
       setIsCalculating(false);
@@ -191,7 +218,7 @@ export default function ROICalculator() {
                   <Slider 
                     value={[inputs.tuition]} 
                     min={20000} max={200000} step={1000}
-                    onValueChange={(v: number | readonly number[]) => setInputs(p => ({ ...p, tuition: Array.isArray(v) ? v[0] : v }))}
+                    onValueChange={(v) => setInputs(p => ({ ...p, tuition: v[0] }))}
                   />
                 </div>
 
@@ -203,7 +230,7 @@ export default function ROICalculator() {
                   <Slider 
                     value={[inputs.livingExpenses]} 
                     min={8000} max={40000} step={500}
-                    onValueChange={(v: number | readonly number[]) => setInputs(p => ({ ...p, livingExpenses: Array.isArray(v) ? v[0] : v }))}
+                    onValueChange={(v) => setInputs(p => ({ ...p, livingExpenses: v[0] }))}
                   />
                 </div>
 
@@ -260,7 +287,7 @@ export default function ROICalculator() {
                   <Slider 
                     value={[inputs.currentSalaryLPA]} 
                     min={0} max={30} step={0.5}
-                    onValueChange={(v: number | readonly number[]) => setInputs(p => ({ ...p, currentSalaryLPA: Array.isArray(v) ? v[0] : v }))}
+                    onValueChange={(v) => setInputs(p => ({ ...p, currentSalaryLPA: v[0] }))}
                   />
                 </div>
 
@@ -272,7 +299,7 @@ export default function ROICalculator() {
                   <Slider 
                     value={[inputs.expectedSalaryUSD]} 
                     min={60000} max={180000} step={2000}
-                    onValueChange={(v: number | readonly number[]) => setInputs(p => ({ ...p, expectedSalaryUSD: Array.isArray(v) ? v[0] : v }))}
+                    onValueChange={(v) => setInputs(p => ({ ...p, expectedSalaryUSD: v[0] }))}
                   />
                 </div>
 
@@ -337,9 +364,9 @@ export default function ROICalculator() {
                <Card className="bg-[#111827] border-white/10 p-6">
                   <p className="text-[10px] font-mono text-muted-foreground uppercase mb-2">Break-Even Point</p>
                   <div className="flex items-baseline space-x-1">
-                     <span className="text-3xl font-bold font-outfit text-primary">{result.breakEvenYears}</span>
+                     <span className="text-3xl font-bold font-outfit text-primary">{result?.breakEvenYears}</span>
                      <span className="text-sm font-mono text-muted-foreground">Yrs</span>
-                     <span className="text-2xl font-bold font-outfit text-primary ml-2 uppercase">{result.breakEvenMonths}</span>
+                     <span className="text-2xl font-bold font-outfit text-primary ml-2 uppercase">{result?.breakEvenMonths}</span>
                      <span className="text-sm font-mono text-muted-foreground">Mo</span>
                   </div>
                   <div className="mt-4 h-2 bg-white/5 rounded-full overflow-hidden">
@@ -353,7 +380,7 @@ export default function ROICalculator() {
 
                <Card className="bg-[#111827] border-white/10 p-6">
                   <p className="text-[10px] font-mono text-muted-foreground uppercase mb-2">10-Year Lifetime Gain</p>
-                  <div className="text-3xl font-bold font-outfit text-emerald-500">{result.lifetimeGainINR}</div>
+                  <div className="text-3xl font-bold font-outfit text-emerald-500">{result?.lifetimeGainINR}</div>
                   <p className="text-[10px] text-muted-foreground mt-2">Extra vs. staying in current role</p>
                </Card>
 
@@ -384,7 +411,7 @@ export default function ROICalculator() {
                   </div>
                   <div className="h-[350px] w-full">
                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={result.cashFlowData}>
+                        <AreaChart data={result?.cashFlowData || []}>
                           <defs>
                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
@@ -437,7 +464,7 @@ export default function ROICalculator() {
                      <Zap className="w-8 h-8 text-primary mb-4 fill-primary/20" />
                      <h4 className="text-lg font-bold text-white mb-4">AI Strategic Insight</h4>
                      <p className="text-sm text-muted-foreground leading-relaxed italic">
-                        &quot;{result.aiInsight}&quot;
+                        &quot;{result?.aiInsight}&quot;
                      </p>
                   </Card>
 
@@ -446,14 +473,14 @@ export default function ROICalculator() {
                         <Shield className="w-4 h-4 text-emerald-500 mr-3 shrink-0 mt-1" />
                         <div>
                            <p className="text-xs font-bold text-emerald-500 uppercase font-mono">Optimization Tip</p>
-                           <p className="text-xs text-muted-foreground mt-1">{result.optimization}</p>
+                           <p className="text-xs text-muted-foreground mt-1">{result?.optimization}</p>
                         </div>
                      </div>
                      <div className="flex items-start">
                         <AlertCircle className="w-4 h-4 text-primary mr-3 shrink-0 mt-1" />
                         <div>
                            <p className="text-xs font-bold text-primary uppercase font-mono">Risk Profile</p>
-                           <p className="text-xs text-muted-foreground mt-1">{result.risk}</p>
+                           <p className="text-xs text-muted-foreground mt-1">{result?.risk}</p>
                         </div>
                      </div>
                   </Card>
@@ -478,24 +505,24 @@ export default function ROICalculator() {
                      <tbody className="text-sm">
                         <tr className="border-b border-white/5">
                            <td className="p-4 font-bold text-muted-foreground">Year 1 Gross</td>
-                           <td className="p-4">{result.comparison.withoutMS.year1}</td>
-                           <td className="p-4 text-primary font-bold">{result.comparison.withMS.year1}</td>
+                           <td className="p-4">{result?.comparison.withoutMS.year1}</td>
+                           <td className="p-4 text-primary font-bold">{result?.comparison.withMS.year1}</td>
                         </tr>
                         <tr className="border-b border-white/5">
                            <td className="p-4 font-bold text-muted-foreground">Year 5 Gross</td>
-                           <td className="p-4">{result.comparison.withoutMS.year5}</td>
-                           <td className="p-4 text-primary font-bold">{result.comparison.withMS.year5}</td>
+                           <td className="p-4">{result?.comparison.withoutMS.year5}</td>
+                           <td className="p-4 text-primary font-bold">{result?.comparison.withMS.year5}</td>
                         </tr>
                         <tr className="border-b border-white/5">
                            <td className="p-4 font-bold text-muted-foreground">10-Year Net Worth</td>
-                           <td className="p-4">{result.comparison.withoutMS.year10NetWorth}</td>
-                           <td className="p-4 text-primary font-bold">{result.comparison.withMS.year10NetWorth}</td>
+                           <td className="p-4">{result?.comparison.withoutMS.year10NetWorth}</td>
+                           <td className="p-4 text-primary font-bold">{result?.comparison.withMS.year10NetWorth}</td>
                         </tr>
                         <tr>
                            <td className="p-4 font-bold text-muted-foreground">Break-Even Status</td>
                            <td className="p-4">N/A</td>
                            <td className="p-4">
-                              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-[10px] font-bold">YEAR {result.breakEvenYears}</span>
+                              <span className="px-2 py-1 bg-emerald-500/10 text-emerald-500 rounded text-[10px] font-bold">YEAR {result?.breakEvenYears}</span>
                            </td>
                         </tr>
                      </tbody>

@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
     const { session, error: authError } = await requireAuthAndCSRF(req);
     if (authError) return authError;
 
-    const rateCheck = await checkRateLimit((session?.user as any).id, 'gemini/chat');
+    const userId = (session?.user as { id: string }).id;
+    const rateCheck = await checkRateLimit(userId, 'gemini/chat');
     if (!rateCheck.allowed) {
       return NextResponse.json({ followups: [] });
     }
@@ -29,8 +30,8 @@ export async function POST(req: NextRequest) {
     const parsed = parseGeminiJSON(aiResponse);
 
     return NextResponse.json(parsed || { followups: [] });
-  } catch (error) {
-    console.error('Follow-up API Error:', error);
+  } catch (err: unknown) {
+    console.error('Follow-up API Error:', err);
     return NextResponse.json({ followups: [] });
   }
 }

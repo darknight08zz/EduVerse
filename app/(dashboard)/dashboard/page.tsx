@@ -29,7 +29,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
-import { calculateLevel } from "@/lib/gamification";
+import { calculateLevel } from "@/lib/gamification-data";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useDemoMode } from "@/contexts/DemoContext";
@@ -52,17 +52,59 @@ const JOURNEY_STEPS = [
   { id: 'applied', label: 'Applied', href: '/shortlist' },
 ];
 
+interface ActivityItem {
+  tool_name: string;
+  used_at: string;
+  xp_earned: number;
+}
+
+interface Notification {
+  id: string;
+  message: string;
+  module?: string;
+  read: boolean;
+  created_at: string;
+}
+
+interface PriorityAction {
+  action: string;
+  module: string;
+  urgency: 'high' | 'medium' | 'low';
+  reason: string;
+}
+
+interface PriorityData {
+  greeting: string;
+  urgencyLevel: 'high' | 'medium' | 'low';
+  nextActions: PriorityAction[];
+}
+
+interface UserProfile {
+  id: string;
+  name?: string;
+  xp_points: number;
+  streak_days: number;
+  gpa?: string | number;
+}
+
+interface ShortlistItem {
+  id: string;
+  university_name: string;
+  program: string;
+  application_deadline: string;
+}
+
 export default function Dashboard() {
   const { isDemoMode, demoProfile, demoShortlist } = useDemoMode();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [dailyTip, setDailyTip] = useState<string>("");
-  const [activity, setActivity] = useState<any[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [usage, setUsage] = useState<string[]>([]);
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ShortlistItem[]>([]);
   const [isLoadingTip, setIsLoadingTip] = useState(false);
-  const [priorityData, setPriorityData] = useState<any>(null);
+  const [priorityData, setPriorityData] = useState<PriorityData | null>(null);
   const [isLoadingPriority, setIsLoadingPriority] = useState(false);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
@@ -107,12 +149,12 @@ export default function Dashboard() {
         .select('*')
         .eq('user_id', user.id);
 
-      const combinedActivity = [
+      const combinedActivity: ActivityItem[] = [
         ...(usageHistory || []),
         ...(historyItems || []).map(h => ({
           tool_name: h.tool_name,
           used_at: h.created_at,
-          xp_earned: 0 // History doesn't track XP increments directly
+          xp_earned: 0
         }))
       ].sort((a, b) => new Date(b.used_at).getTime() - new Date(a.used_at).getTime());
 
@@ -360,7 +402,7 @@ export default function Dashboard() {
                         </span>
                      </div>
                      <div className="grid md:grid-cols-3 gap-4">
-                        {priorityData.nextActions.map((item: any, i: number) => (
+                        {priorityData.nextActions.map((item, i) => (
                            <Link key={i} href={`/${item.module.replace('_', '-')}`}>
                               <div className="p-4 rounded-2xl bg-[#0a0f1e] border border-white/5 hover:border-primary/50 transition-all group cursor-pointer h-full flex flex-col justify-between">
                                  <div>

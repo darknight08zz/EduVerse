@@ -52,7 +52,7 @@ export default function Sidebar() {
     const loadData = async () => {
       if (isDemoMode) {
         setProfile(demoProfile);
-        setCurrentXP(demoProfile.xpPoints);
+        setCurrentXP(demoProfile.xp_points);
         setShortlistCount(3);
         setHasUrgentDeadline(true);
         return;

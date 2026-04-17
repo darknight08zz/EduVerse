@@ -13,9 +13,9 @@ export const DEMO_PROFILE = {
   targetPrograms: ['MS Computer Science', 'MS Software Engineering', 'MS Artificial Intelligence'],
   budget: 55000,
   careerGoal: 'Work as an AI/ML engineer at a top tech company for 5 years, then return to India to build a startup in the healthcare AI space',
-  xpPoints: 340,
-  streakDays: 3,
-  graduationYear: 2024,
+  xp_points: 340,
+  streak_days: 3,
+  graduation_year: 2024,
   onboarding_complete: true,
   current_degree: 'B.Tech/B.E.', 
   target_countries: ['USA', 'Canada', 'Germany'],
@@ -33,6 +33,7 @@ export const DEMO_SHORTLIST = [
     application_deadline: new Date(Date.now() + 47 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'preparing',
     admission_probability: 68,
+    created_at: new Date().toISOString(),
   },
   {
     id: 'demo-sl-2',
@@ -45,6 +46,7 @@ export const DEMO_SHORTLIST = [
     application_deadline: new Date(Date.now() + 62 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'researching',
     admission_probability: 74,
+    created_at: new Date().toISOString(),
   },
   {
     id: 'demo-sl-3',
@@ -57,5 +59,6 @@ export const DEMO_SHORTLIST = [
     application_deadline: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'applied',
     admission_probability: 55,
+    created_at: new Date().toISOString(),
   },
 ];

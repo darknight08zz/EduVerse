@@ -28,7 +28,7 @@ export interface StudentProfile {
 }
 
 export const geminiFlash = genAI.getGenerativeModel({ 
-  model: 'gemini-2.0-flash',
+  model: 'gemini-flash-latest',
   generationConfig: {
     temperature: 0.7,
     maxOutputTokens: 1000,

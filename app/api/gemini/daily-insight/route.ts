@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
     const { session, error: authError } = await requireAuthAndCSRF(req);
     if (authError) return authError;
 
-    const rateCheck = await checkRateLimit((session?.user as any).id, 'gemini/daily');
+    const userId = (session?.user as { id: string }).id;
+    const rateCheck = await checkRateLimit(userId, 'gemini/daily');
     if (!rateCheck.allowed) {
       return NextResponse.json({ tip: "💡 Take a break! Too many insights for today." });
     }
@@ -33,8 +34,8 @@ export async function POST(req: NextRequest) {
     const tip = await generateWithGemini(prompt);
 
     return NextResponse.json({ tip });
-  } catch (error) {
-    console.error('Daily Insight API Error:', error);
+  } catch (err: unknown) {
+    console.error('Daily Insight API Error:', err);
     return NextResponse.json({ tip: "💡 Today's Insight: Start your SOP draft early to highlight your unique career trajectory." });
   }
 }

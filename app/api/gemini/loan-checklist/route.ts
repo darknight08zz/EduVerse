@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rateCheck = await checkRateLimit((session.user as any).id || session.user.email, 'gemini/sop');
+    const userId = (session.user as { id: string }).id || session.user.email;
+    const rateCheck = await checkRateLimit(userId, 'gemini/sop');
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { error: `Rate limit exceeded. Resets at ${rateCheck.resetAt.toLocaleTimeString()}.` },
@@ -57,8 +58,8 @@ export async function POST(req: NextRequest) {
     const parsed = parseGeminiJSON(aiResponse);
 
     return NextResponse.json(parsed || { categories: [] });
-  } catch (error) {
-    console.error('Loan Checklist API Error:', error);
+  } catch (err: unknown) {
+    console.error('Loan Checklist API Error:', err);
     return NextResponse.json({ error: 'Failed to generate checklist' }, { status: 500 });
   }
 }

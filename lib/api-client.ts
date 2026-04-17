@@ -1,8 +1,4 @@
-/**
- * Secured fetch wrapper for frontend API calls.
- * Automatically adds CSRF signals and handles standard error shapes.
- */
-export async function apiPost<T = any>(endpoint: string, body: object): Promise<T> {
+export async function apiPost<T = unknown>(endpoint: string, body: object): Promise<T> {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
@@ -28,7 +24,7 @@ export async function apiPost<T = any>(endpoint: string, body: object): Promise<
 /**
  * Enhanced GET wrapper (optional, for consistency)
  */
-export async function apiGet<T = any>(endpoint: string): Promise<T> {
+export async function apiGet<T = unknown>(endpoint: string): Promise<T> {
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {

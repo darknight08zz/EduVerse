@@ -56,7 +56,7 @@ WRITING REQUIREMENTS:
 Respond with ONLY the SOP text — no preamble, no "Here is your SOP:", no markdown headers. Just the raw SOP text starting with the opening sentence.`;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     const result = await model.generateContentStream(prompt);
 
     const stream = new ReadableStream({

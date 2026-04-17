@@ -27,7 +27,6 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
-import { awardXP } from "@/lib/gamification";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -89,7 +88,11 @@ export default function OnboardingPage() {
            onboarding_complete: true
         }).eq('id', user.id);
         
-        await awardXP(user.id, 'PROFILE_COMPLETE');
+        await fetch('/api/gamification/award', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ actionKey: 'PROFILE_COMPLETE' }),
+        });
       } else {
         // Fallback for demo
         localStorage.setItem('eduverse_xp', '100');

@@ -62,8 +62,10 @@ Respond ONLY with this JSON:
       ]
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Agent Personalization Error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ 
+      error: err instanceof Error ? err.message : "Internal server error" 
+    }, { status: 500 });
   }
 }

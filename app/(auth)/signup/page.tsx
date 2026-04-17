@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { toast } from "sonner";
-import { supabase, getServiceSupabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -39,16 +39,17 @@ export default function SignupPage() {
       if (signUpError) throw signUpError;
 
       if (data.user) {
-        // 1.5 Create profile record immediately using Service Role (bypasses unconfirmed email restriction)
-        const serviceSupabase = getServiceSupabase();
-        await serviceSupabase.from('user_profiles').insert({
-          id: data.user.id,
-          name: fullName,
-          xp_points: 0,
-          streak_days: 1,
-          last_active: new Date().toISOString(),
-          onboarding_complete: false
+        // 1.5 Create profile record immediately using secure API (server-side Service Role)
+        const response = await fetch('/api/auth/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: data.user.id, name: fullName }),
         });
+
+        if (!response.ok) {
+          const resData = await response.json();
+          throw new Error(resData.error || 'Failed to create profile');
+        }
 
         toast.success("Account created successfully!");
         
@@ -74,12 +75,12 @@ export default function SignupPage() {
            router.push("/onboarding");
         }
       }
-    } catch (error: any) {
-      const isRateLimit = error.message?.toLowerCase().includes("rate limit") || error.status === 429;
+    } catch (error: unknown) {
+      const isRateLimit = error instanceof Error && (error.message?.toLowerCase().includes("rate limit") || (error as any).status === 429);
       toast.error(isRateLimit ? "Too many attempts" : "Signup failed", {
         description: isRateLimit 
           ? "Supabase rate limit exceeded. Please wait a few minutes or increase limits in the dashboard." 
-          : (error.message || "An unexpected error occurred.")
+          : (error instanceof Error ? error.message : "An unexpected error occurred.")
       });
     } finally {
       setIsLoading(false);

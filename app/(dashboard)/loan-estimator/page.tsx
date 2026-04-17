@@ -72,6 +72,15 @@ const INITIAL_ASSESSMENT = {
   expectedSalaryUSD: 95000
 };
 
+interface ChecklistCategory {
+  name: string;
+  documents: string[];
+}
+
+interface LoanChecklist {
+  categories: ChecklistCategory[];
+}
+
 export default function LoanEstimator() {
   const { isDemoMode, demoProfile } = useDemoMode();
   
@@ -86,7 +95,7 @@ export default function LoanEstimator() {
   const [customRate, setCustomRate] = useState(10.5);
 
   // Step 4: Checklist
-  const [checklist, setChecklist] = useState<any>(null);
+  const [checklist, setChecklist] = useState<LoanChecklist | null>(null);
   const [completedDocs, setCompletedDocs] = useState<string[]>([]);
 
   // Unsaved Warning
@@ -190,7 +199,7 @@ export default function LoanEstimator() {
     }
 
     try {
-      const data = await apiPost('/api/gemini/loan-checklist', {
+      const data = await apiPost<LoanChecklist>('/api/gemini/loan-checklist', {
         loanProduct: selectedLoan.productName,
         program: assessment.program,
         university: assessment.university,
@@ -200,9 +209,9 @@ export default function LoanEstimator() {
       setChecklist(data);
       setStep(4);
       toast.info("🎯 +20 XP — Loan Comparison Saved");
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Checklist Error", {
-        description: err.message || "Failed to generate checklist"
+        description: err instanceof Error ? err.message : "Failed to generate checklist"
       });
     } finally {
       setIsGenerating(false);
@@ -330,7 +339,7 @@ export default function LoanEstimator() {
                         <div className="space-y-4 pt-6 border-t border-white/5">
                            <Label className="text-xs font-mono uppercase text-muted-foreground">University Tier</Label>
                            <Select 
-                            value={assessment.universityRanking}                             onValueChange={(v: string | null) => v && setAssessment({ universityRanking: v as any })}
+                            value={assessment.universityRanking}                             onValueChange={(v: string | null) => v && setAssessment({ universityRanking: v as "premier" | "top100" | "other" })}
                            >
                               <SelectTrigger className="bg-white/5 border-white/10">
                                  <SelectValue />
@@ -480,7 +489,7 @@ export default function LoanEstimator() {
                             </div>
                              <Slider 
                                 value={[customRate]} min={7} max={18} step={0.05} 
-                                onValueChange={(v: number | readonly number[]) => setCustomRate(Array.isArray(v) ? v[0] : v)}
+                                onValueChange={(v) => setCustomRate(v[0])}
                             />
                          </div>
 
@@ -583,7 +592,7 @@ export default function LoanEstimator() {
            <motion.div initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8">
               <div className="grid lg:grid-cols-3 gap-8">
                  <div className="lg:col-span-2 space-y-6">
-                    {checklist.categories.map((cat: any, i: number) => (
+                    {checklist.categories.map((cat, i) => (
                        <Card key={i} className="bg-[#111827] border-white/10 p-6">
                           <h3 className="text-sm font-bold font-mono text-primary flex items-center mb-6 uppercase tracking-widest">
                              <div className="w-1.5 h-1.5 rounded-full bg-primary mr-3" /> {cat.name}
@@ -623,12 +632,12 @@ export default function LoanEstimator() {
                           <div className="space-y-2">
                              <div className="flex justify-between text-xs font-mono mb-1">
                                 <span className="text-muted-foreground">DOCUMENTS GATHERED</span>
-                                <span className="text-primary">{Math.round((completedDocs.length / checklist.categories.reduce((acc: any, c: any) => acc + c.documents.length, 0)) * 100)}%</span>
+                                <span className="text-primary">{Math.round((completedDocs.length / checklist.categories.reduce((acc, c) => acc + c.documents.length, 0)) * 100)}%</span>
                              </div>
                              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                 <motion.div 
                                     initial={{ width: 0 }} 
-                                    animate={{ width: `${(completedDocs.length / checklist.categories.reduce((acc: any, c: any) => acc + c.documents.length, 0)) * 100}%` }} 
+                                    animate={{ width: `${(completedDocs.length / checklist.categories.reduce((acc, c) => acc + c.documents.length, 0)) * 100}%` }} 
                                     className="h-full bg-primary" 
                                 />
                              </div>

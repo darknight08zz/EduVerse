@@ -30,9 +30,18 @@ const COLUMNS = [
 
 import { useDemoMode } from "@/contexts/DemoContext";
 
+interface ShortlistItem {
+  id: string;
+  university_name: string;
+  program: string;
+  status: string;
+  application_deadline: string | null;
+  created_at: string;
+}
+
 export default function ShortlistPage() {
   const { isDemoMode, demoShortlist } = useDemoMode();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ShortlistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
@@ -54,8 +63,10 @@ export default function ShortlistPage() {
 
       if (error) throw error;
       setItems(data || []);
-    } catch (error: any) {
-      toast.error("Failed to load shortlist", { description: error.message });
+    } catch (err: unknown) {
+      toast.error("Failed to load shortlist", { 
+        description: err instanceof Error ? err.message : "An unknown error occurred" 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +116,7 @@ export default function ShortlistPage() {
         });
         toast.success("🏆 +200 XP — ADMITTED!", { description: "Congratulations on your acceptance!" });
       }
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast.error("Failed to update status");
       loadData(); // Revert
     }
@@ -117,14 +128,18 @@ export default function ShortlistPage() {
       if (error) throw error;
       setItems(items.filter(item => item.id !== id));
       toast.success("University removed from shortlist");
-    } catch (error: any) {
+    } catch (err: unknown) {
       toast.error("Failed to remove item");
     }
   };
 
   const nextDeadline = items
     .filter(i => i.application_deadline)
-    .sort((a, b) => new Date(a.application_deadline).getTime() - new Date(b.application_deadline).getTime())[0];
+    .sort((a, b) => {
+      const dateA = a.application_deadline ? new Date(a.application_deadline).getTime() : 0;
+      const dateB = b.application_deadline ? new Date(b.application_deadline).getTime() : 0;
+      return dateA - dateB;
+    })[0];
 
   const acceptanceRate = items.filter(i => i.status === 'accepted').length / 
     (items.filter(i => ['applied', 'waitlisted', 'accepted', 'rejected'].includes(i.status)).length || 1);
@@ -165,7 +180,7 @@ export default function ShortlistPage() {
          {[
            { label: "Shortlisted", value: items.length, icon: Target, color: "text-primary" },
            { label: "Applied", value: items.filter(i => i.status === 'applied' || i.status === 'accepted').length, icon: CheckCircle2, color: "text-emerald-500" },
-           { label: "Next Deadline", value: nextDeadline ? new Date(nextDeadline.application_deadline).toLocaleDateString([], { month: 'short', day: 'numeric' }) : "--", icon: Calendar, color: "text-amber-500" },
+           { label: "Next Deadline", value: (nextDeadline && nextDeadline.application_deadline) ? new Date(nextDeadline.application_deadline).toLocaleDateString([], { month: 'short', day: 'numeric' }) : "--", icon: Calendar, color: "text-amber-500" },
            { label: "Acceptance Rate", value: `${Math.round(acceptanceRate * 100)}%`, icon: TrendingUp, color: "text-blue-500" },
          ].map((stat, i) => (
            <Card key={i} className="bg-[#111827] border-white/10">

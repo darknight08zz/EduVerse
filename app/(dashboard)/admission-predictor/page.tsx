@@ -84,10 +84,30 @@ const ProbabilityGauge = ({ value }: { value: number }) => {
   );
 };
 
+interface RadarPoint {
+  subject: string;
+  A: number;
+}
+
+interface Improvement {
+  action: string;
+  boost: string;
+}
+
+interface AdmissionReport {
+  probability: number;
+  zone: 'reach' | 'moderate' | 'good' | 'strong';
+  aiInsight: string;
+  radarData: RadarPoint[];
+  liftingUp: string[];
+  draggingDown: string[];
+  improvements: Improvement[];
+}
+
 export default function AdmissionPredictor() {
   const { isDemoMode, demoProfile } = useDemoMode();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [report, setReport] = useState<any>(null);
+  const [report, setReport] = useState<AdmissionReport | null>(null);
 
   const [form, setForm] = useState({
     uniName: "",
@@ -155,7 +175,7 @@ export default function AdmissionPredictor() {
     }
 
     try {
-      const data = await apiPost('/api/gemini/admission', { profile: form });
+      const data = await apiPost<AdmissionReport>('/api/gemini/admission', { profile: form });
       setReport(data);
       if (!isDemoMode) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -164,10 +184,10 @@ export default function AdmissionPredictor() {
       toast.success("🎯 +35 XP — Strategic Applicant Badge Unlocked!", {
         description: "Your comprehensive admission report is ready.",
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       toast.error("Prediction failed", {
-        description: err.message || "The admissions AI engine is currently busy."
+        description: err instanceof Error ? err.message : "The admissions AI engine is currently busy."
       });
     } finally {
       setIsAnalyzing(false);
@@ -315,19 +335,19 @@ export default function AdmissionPredictor() {
             {/* Main Probability Section */}
             <div className="grid lg:grid-cols-12 gap-10 items-center">
                <div className="lg:col-span-5 text-center space-y-8">
-                  <ProbabilityGauge value={report.probability} />
+                  {report && <ProbabilityGauge value={report.probability} />}
                   <div className={cn(
                     "inline-block px-10 py-3 rounded-2xl font-bold font-outfit text-xl border shadow-xl relative overflow-hidden group",
-                    report.zone === "reach" ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                    report.zone === "moderate" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
-                    report.zone === "good" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
+                    report?.zone === "reach" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                    report?.zone === "moderate" ? "bg-amber-500/10 text-amber-500 border-amber-500/20" :
+                    report?.zone === "good" ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
                     "bg-blue-500/10 text-blue-500 border-blue-500/20"
                   )}>
                      <div className="absolute inset-0 bg-white/5 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                     {report.zone.toUpperCase()} MATCH
+                     {report?.zone.toUpperCase()} MATCH
                   </div>
                   <p className="text-sm text-muted-foreground italic max-w-sm mx-auto">
-                    &quot;{report.aiInsight}&quot;
+                    &quot;{report?.aiInsight}&quot;
                   </p>
                </div>
 
@@ -337,7 +357,7 @@ export default function AdmissionPredictor() {
                   </h3>
                   <div className="h-[350px] w-full">
                      <ResponsiveContainer width="100%" height="100%">
-                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={report.radarData}>
+                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={report?.radarData || []}>
                           <PolarGrid stroke="#ffffff10" />
                           <PolarAngleAxis dataKey="subject" tick={{ fill: "#6b7280", fontSize: 10, fontWeight: "bold" }} />
                           <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
@@ -362,7 +382,7 @@ export default function AdmissionPredictor() {
                      <h4 className="font-bold font-outfit text-lg">Lifting You Up</h4>
                   </div>
                   <ul className="space-y-6">
-                    {report.liftingUp.map((text: string, i: number) => (
+                    {report?.liftingUp.map((text, i) => (
                       <li key={i} className="flex items-start space-x-4">
                         <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 text-[10px] font-bold shrink-0 mt-0.5 border border-emerald-500/20">{i+1}</div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
@@ -377,7 +397,7 @@ export default function AdmissionPredictor() {
                      <h4 className="font-bold font-outfit text-lg">Dragging You Down</h4>
                   </div>
                   <ul className="space-y-6">
-                    {report.draggingDown.map((text: string, i: number) => (
+                    {report?.draggingDown.map((text, i) => (
                       <li key={i} className="flex items-start space-x-4">
                         <div className="w-6 h-6 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 text-[10px] font-bold shrink-0 mt-0.5 border border-red-500/20">{i+1}</div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{text}</p>
@@ -398,10 +418,9 @@ export default function AdmissionPredictor() {
                      <Zap className="w-4 h-4 mr-3 text-primary" />
                      <span className="text-xs font-bold text-white font-mono">EST. BOOST: ~15-20%</span>
                   </div>
-               </div>
-               
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  {report.improvements.map((action: any, i: number) => (
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {report?.improvements.map((action, i) => (
                     <motion.div 
                       key={i}
                       whileHover={{ x: 10 }}

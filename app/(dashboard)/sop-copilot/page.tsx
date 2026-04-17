@@ -77,7 +77,6 @@ export default function SOPCopilot() {
     const loadData = async () => {
       if (isDemoMode) {
         setProfile(demoProfile);
-        setShortlist(demoShortlist);
         
         if (!wasRestored) {
           setSopData({
@@ -213,13 +212,13 @@ export default function SOPCopilot() {
   const fetchFeedback = async (content: string) => {
     if (isDemoMode) return;
     try {
-      const data = await apiPost('/api/gemini/sop-feedback', { 
+      const data = await apiPost<any>('/api/gemini/sop-feedback', { 
         sopText: content, 
         university: sopData.university, 
         program: sopData.program 
       });
       setFeedback(data);
-      if (data.overallScore > 80) {
+      if (data && (data as any).overallScore > 80) {
         await awardXP(profile.id, "STRONG_APPLICANT");
       }
     } catch (e) {

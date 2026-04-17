@@ -37,8 +37,41 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
+interface KPI {
+  label: string;
+  value: string | number;
+  icon: any; // Lucide icon components are best typed as any or React.ElementType in many cases, but I'll use LucideProps | React.ElementType if I can. Lucide icons are LucideIcon.
+  color: string;
+  trend: string;
+}
+
+interface FunnelEntry {
+  value: number;
+  name: string;
+  fill: string;
+}
+
+interface CountryEntry {
+  name: string;
+  value: number;
+}
+
+interface BlogSummary {
+  id: string;
+  title: string;
+  views: number;
+  date: string;
+}
+
+interface AdminStats {
+  kpis: KPI[];
+  funnelData: FunnelEntry[];
+  countryData: CountryEntry[];
+  blogs: BlogSummary[];
+}
+
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -54,11 +87,11 @@ export default function AdminDashboard() {
 
         const totalUsers = users.data?.length || 0;
         const activeToday = users.data?.filter(u => 
-          new Date(u.updated_at).toDateString() === new Date().toDateString()
+          u.updated_at && new Date(u.updated_at).toDateString() === new Date().toDateString()
         ).length || 0;
 
         // Funnel Data
-        const funnelData = [
+        const funnelData: FunnelEntry[] = [
           { value: totalUsers, name: 'Signed Up', fill: '#8884d8' },
           { value: users.data?.filter(u => u.gpa).length || 0, name: 'Profile Done', fill: '#83a6ed' },
           { value: new Set(usage.data?.filter(u => u.tool_name === 'career_navigator').map(u => u.user_id)).size, name: 'Tool Engagement', fill: '#8dd1e1' },
@@ -73,7 +106,7 @@ export default function AdminDashboard() {
             countryCounts[c] = (countryCounts[c] || 0) + 1;
           });
         });
-        const countryData = Object.entries(countryCounts)
+        const countryData: CountryEntry[] = Object.entries(countryCounts)
           .map(([name, value]) => ({ name, value }))
           .sort((a, b) => b.value - a.value)
           .slice(0, 5);
@@ -83,7 +116,7 @@ export default function AdminDashboard() {
             { label: "Total Scholars", value: totalUsers, icon: Users, color: "text-blue-500", trend: "+12%" },
             { label: "Active Today", value: activeToday, icon: Activity, color: "text-emerald-500", trend: "Stable" },
             { label: "AI Posts Live", value: blogs.data?.length || 0, icon: FileText, color: "text-primary", trend: "Daily" },
-            { label: "Conv. Rate", value: `${Math.round((funnelData[4].value / totalUsers) * 100) || 0}%`, icon: TrendingUp, color: "text-amber-500", trend: "+2%" },
+            { label: "Conv. Rate", value: `${Math.round((funnelData[4].value / (totalUsers || 1)) * 100) || 0}%`, icon: TrendingUp, color: "text-amber-500", trend: "+2%" },
           ],
           funnelData,
           countryData,
@@ -91,7 +124,7 @@ export default function AdminDashboard() {
             id: b.id,
             title: b.title,
             views: b.view_count || 0,
-            date: new Date(b.published_at).toLocaleDateString()
+            date: b.published_at ? new Date(b.published_at).toLocaleDateString() : 'Draft'
           })) || []
         });
       } catch (err) {
@@ -140,7 +173,7 @@ export default function AdminDashboard() {
 
         {/* KPI Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-           {stats.kpis.map((kpi: any, i: number) => (
+           {stats?.kpis.map((kpi: any, i: number) => (
               <Card key={i} className="bg-[#111827] border-white/10 shadow-2xl relative overflow-hidden group">
                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                     <kpi.icon className="w-16 h-16" />
@@ -177,12 +210,12 @@ export default function AdminDashboard() {
                         itemStyle={{ color: '#fbbf24' }}
                        />
                        <Funnel
-                          data={stats.funnelData}
+                          data={stats?.funnelData || []}
                           dataKey="value"
                           nameKey="name"
                        >
                           <LabelList position="right" fill="#94a3b8" stroke="none" dataKey="name" />
-                          {stats.funnelData.map((entry: any, index: number) => (
+                          {stats?.funnelData.map((entry: any, index: number) => (
                              <Cell key={`cell-${index}`} fill={entry.fill} fillOpacity={0.8} />
                           ))}
                        </Funnel>
@@ -238,13 +271,13 @@ export default function AdminDashboard() {
               </CardHeader>
               <div className="h-[300px]">
                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stats.countryData}>
+                    <BarChart data={stats?.countryData || []}>
                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                        <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                        <Tooltip cursor={{ fill: '#ffffff05' }} contentStyle={{ backgroundColor: '#111827', borderColor: '#334155' }} />
                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                          {stats.countryData.map((entry: any, index: number) => (
+                          {stats?.countryData.map((entry: any, index: number) => (
                              <Cell key={`cell-${index}`} fill={index === 0 ? '#f59e0b' : '#3b82f6'} />
                           ))}
                        </Bar>
@@ -262,7 +295,7 @@ export default function AdminDashboard() {
                  <Button variant="ghost" className="text-[10px] font-mono text-primary underline">VIEW ALL</Button>
               </CardHeader>
               <div className="space-y-4">
-                 {stats.blogs.map((blog: any, i: number) => (
+                 {stats?.blogs.map((blog: any, i: number) => (
                     <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-colors cursor-pointer group">
                        <div className="flex flex-col space-y-1 max-w-[70%]">
                           <span className="text-sm font-bold truncate group-hover:text-primary transition-colors">{blog.title}</span>

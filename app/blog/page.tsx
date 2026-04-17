@@ -7,11 +7,22 @@ import Navbar from "@/components/layout/Navbar";
 
 export const dynamic = 'force-dynamic';
 
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  meta_description: string;
+  published_at: string;
+}
+
 export default async function BlogPage() {
-  const { data: posts, error } = await supabase
+  const { data, error } = await supabase
     .from('blog_posts')
     .select('*')
     .order('published_at', { ascending: false });
+
+  const posts = data as BlogPost[] | null;
 
   return (
     <div className="min-h-screen bg-[#0a0f1e] text-white selection:bg-primary selection:text-background">
@@ -63,7 +74,7 @@ export default async function BlogPage() {
 
           {/* Grid Feed */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {posts?.slice(1).map((post: any) => (
+            {posts?.slice(1).map((post) => (
               <Link key={post.id} href={`/blog/${post.slug}`}>
                 <Card className="bg-[#111827] border-white/10 h-full hover:border-primary/50 hover:bg-white/[0.02] transition-all group shadow-xl">
                   <CardContent className="p-6 space-y-4">

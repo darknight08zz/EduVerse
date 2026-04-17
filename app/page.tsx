@@ -250,7 +250,7 @@ export default function LandingPage() {
   );
 }
 
-function ChevronRight(props: any) {
+function ChevronRight(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg 
       {...props} 
