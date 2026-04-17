@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EduVerse — AI-Powered Study Abroad Companion 🎓
 
-## Getting Started
+EduVerse is a unified, high-fidelity platform designed specifically for Indian students navigating the complex journey of international education. By bridging the gap between career discovery and financial execution, EduVerse uses Gemini 1.5 Flash to provide personalized, data-driven academic roadmaps.
 
-First, run the development server:
+![EduVerse Dashboard](https://images.unsplash.com/photo-1523050335392-9ae38d19a793?auto=format&fit=crop&q=80&w=1200)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Vision
+To democratize expert study-abroad consulting through specialized AI, making global education accessible and financially transparent for every student.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## ✨ Core Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 1. Career Navigator 🗺️
+*   **AI Discovery**: Specialized profile analysis (GPA, Field, Goals) to match with top global programs.
+*   **Skill Gaps**: Identifies what you need to master before you apply.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. ROI Calculator 💰
+*   **Financial Clarity**: Side-by-side wealth trajectory analysis (India vs. Abroad).
+*   **Break-Even Tracking**: Know exactly which year you'll pay off your investment.
 
-## Learn More
+### 3. Admission Predictor 🎯
+*   **Heuristic Modeling**: Heuristic profile strength analysis with radar charts.
+*   **Improvement Roadmap**: AI-generated action items to boost your admission odds.
 
-To learn more about Next.js, take a look at the following resources:
+### 4. Conversational AI Mentor 💬
+*   **24/7 Support**: Expert advice on SOPs, LORs, Visa processes, and living abroad.
+*   **Persistent Memory**: Remembers your profile across all modules.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 5. Loan Estimator 🏦
+*   **Lender Matching**: Weighted rule-based matching with SBI, HDFC, MPOWER, and more.
+*   **AI Document Roadmap**: Personalized checklist based on your selected lender.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 6. Gamification & Growth ⚡
+*   **Progressive Levels**: Explorer → Researcher → Applicant → Scholar → Global Student.
+*   **XP Rewards**: Earned for every strategic action taken on the platform.
 
-## Deploy on Vercel
+## 🛠️ Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS / Vanilla CSS (Rich Aesthetics)
+- **Animations**: Framer Motion
+- **AI**: Google Gemini 1.5 Flash
+- **Database/Auth**: Supabase + NextAuth
+- **Charts**: Recharts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📦 Getting Started
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Prerequisites
+- Node.js 18.x or higher
+- A Google Cloud Project for Gemini API
+- A Supabase Project
+
+### Step-by-Step Setup
+
+1. **Clone the Repo**
+   ```bash
+   git clone https://github.com/your-repo/eduverse.git
+   cd eduverse
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment Variables**
+   Create a `.env.local` file in the root directory:
+   ```env
+   # AI
+   GEMINI_API_KEY=your_gemini_key
+
+   # NextAuth
+   NEXTAUTH_URL=http://localhost:3000
+   NEXTAUTH_SECRET=any_long_secret_string
+   GOOGLE_CLIENT_ID=your_google_id
+   GOOGLE_CLIENT_SECRET=your_google_secret
+
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   ```
+
+4. **Database Setup**
+   Run the SQL provided in `supabase_migration.sql` in your Supabase SQL Editor.
+
+5. **Run Development Server**
+   ```bash
+   npm run dev
+   ```
+
+## 🔐 Demo Credentials
+You can test the full platform using these credentials:
+*   **Email**: `demo@eduverse.app`
+*   **Password**: `demo1234`
+
+## 🌍 Deployment
+Deploying to Vercel is highly recommended:
+1. Connect your GitHub repository to Vercel.
+2. Add the environment variables listed above.
+3. Vercel will automatically detect Next.js and deploy.
+
+---
+Built with ❤️ by the EduVerse Team for the future leaders of the world.
