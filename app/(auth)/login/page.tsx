@@ -5,7 +5,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { GraduationCap, Mail, Lock, ArrowRight, Zap, AlertCircle } from "lucide-react";
+import { GraduationCap, Mail, Lock, ArrowRight, Zap, AlertCircle, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,6 +53,17 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
+        {/* Back Button */}
+        <Link 
+          href="/" 
+          className="absolute -top-16 left-0 flex items-center text-muted-foreground hover:text-white transition-colors group"
+        >
+          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-mono uppercase tracking-widest">Back to Home</span>
+        </Link>
+
         <div className="flex flex-col items-center mb-10">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-2xl mb-6">
             <GraduationCap className="w-10 h-10 text-background" />
