@@ -21,10 +21,12 @@ export function useFormPersist<T extends object>(
     return initialState;
   });
 
-  const [wasRestored, setWasRestored] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return !!sessionStorage.getItem(`eduverse_form_${key}`);
-  });
+  // Always start false so server & client initial renders match (no hydration mismatch).
+  // useEffect runs only after hydration, safely reading sessionStorage on the client.
+  const [wasRestored, setWasRestored] = useState(false);
+  useEffect(() => {
+    setWasRestored(!!sessionStorage.getItem(`eduverse_form_${key}`));
+  }, [key]);
 
 
   const update = useCallback((updates: Partial<T>) => {

@@ -99,7 +99,7 @@ export default function SignupPage() {
         {/* Back Button */}
         <Link 
           href="/" 
-          className="absolute -top-16 left-0 flex items-center text-muted-foreground hover:text-white transition-colors group"
+          className="flex items-center text-muted-foreground hover:text-white transition-colors group mb-8"
         >
           <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center mr-3 group-hover:bg-white/10 transition-colors">
             <ArrowLeft className="w-4 h-4" />

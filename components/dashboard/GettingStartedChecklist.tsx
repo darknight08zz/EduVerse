@@ -38,6 +38,8 @@ export default function GettingStartedChecklist({
   toolsUsed,
   shortlistCount
 }: GettingStartedChecklistProps) {
+  const toolUsedLower = toolsUsed.map(t => t.toLowerCase());
+
   const items: ChecklistItem[] = [
     {
       id: 'profile',
@@ -46,9 +48,9 @@ export default function GettingStartedChecklist({
       xpReward: '+100 XP',
       href: '/onboarding',
       isComplete: !!(
-        profile?.onboarding_complete || 
+        profile?.onboarding_complete ||
         (profile?.current_degree || profile?.degree) ||
-        (profile?.xp_points ?? 0 > 50)
+        ((profile?.xp_points ?? 0) > 50)
       ),
     },
     {
@@ -57,7 +59,7 @@ export default function GettingStartedChecklist({
       description: 'Get AI-powered country and university recommendations',
       xpReward: '+50 XP',
       href: '/career-navigator',
-      isComplete: toolsUsed.includes('career_navigator'),
+      isComplete: toolUsedLower.some(t => t.includes('career')),
     },
     {
       id: 'admission',
@@ -65,7 +67,7 @@ export default function GettingStartedChecklist({
       description: 'Get a realistic probability for your target schools',
       xpReward: '+35 XP',
       href: '/admission-predictor',
-      isComplete: toolsUsed.includes('admission_predictor'),
+      isComplete: toolUsedLower.some(t => t.includes('admission')),
     },
     {
       id: 'roi',
@@ -73,7 +75,7 @@ export default function GettingStartedChecklist({
       description: 'See if your degree investment pays off',
       xpReward: '+40 XP',
       href: '/roi-calculator',
-      isComplete: toolsUsed.includes('roi_calculator'),
+      isComplete: toolUsedLower.some(t => t.includes('roi')),
     },
     {
       id: 'shortlist',

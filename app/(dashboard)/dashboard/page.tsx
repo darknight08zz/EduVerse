@@ -150,9 +150,12 @@ export default function Dashboard() {
         .eq('user_id', user.id);
 
       const combinedActivity: ActivityItem[] = [
-        ...(usageHistory || []),
+        ...(usageHistory || []).map(u => ({
+          ...u,
+          tool_name: u.tool_name.toLowerCase(), // normalize: CAREER_NAVIGATOR → career_navigator
+        })),
         ...(historyItems || []).map(h => ({
-          tool_name: h.tool_name,
+          tool_name: h.tool_name.toLowerCase(),
           used_at: h.created_at,
           xp_earned: 0
         }))

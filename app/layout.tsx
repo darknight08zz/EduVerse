@@ -19,6 +19,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://eduverse-demo.vercel.app'),
   title: 'EduVerse — AI-Powered Study Abroad Companion',
   description: 'Discover universities, predict admission odds, calculate your ROI, and get your education loan — all powered by AI. Built for Indian students planning higher studies abroad.',
   keywords: ['study abroad', 'education loan India', 'MS abroad', 'GRE', 'university admission', 'AI career navigator'],

@@ -88,11 +88,16 @@ export default function OnboardingPage() {
            onboarding_complete: true
         }).eq('id', user.id);
         
-        await fetch('/api/gamification/award', {
+        const awardResp = await fetch('/api/gamification/award', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ actionKey: 'PROFILE_COMPLETE' }),
+          body: JSON.stringify({ actionKey: 'PROFILE_COMPLETE', userId: user.id }),
         });
+        
+        if (awardResp.ok) {
+          // Fire event so Sidebar XP bar updates instantly
+          window.dispatchEvent(new CustomEvent('xp_earned', { detail: { points: 100 } }));
+        }
       } else {
         // Fallback for demo
         localStorage.setItem('eduverse_xp', '100');

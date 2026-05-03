@@ -31,7 +31,7 @@ export const geminiFlash = genAI.getGenerativeModel({
   model: 'gemini-flash-latest',
   generationConfig: {
     temperature: 0.7,
-    maxOutputTokens: 1000,
+    maxOutputTokens: 2048, // increased: career JSON can exceed 1000 tokens causing truncation
   }
 });
 
